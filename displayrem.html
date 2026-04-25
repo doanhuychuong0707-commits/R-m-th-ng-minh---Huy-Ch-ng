@@ -3,55 +3,135 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Display</title>
+<title>Smart Home Display</title>
 
 <style>
-body{margin:0;font-family:sans-serif;background:#000;color:white;text-align:center}
-.window{height:250px;margin:20px;background:#60a5fa;position:relative;overflow:hidden}
-.curtain{position:absolute;top:0;width:55%;height:100%;background:#444}
-.left{left:0}.right{right:0}
-.light{height:120px;margin:20px;background:#020617;display:flex;align-items:center;justify-content:center;font-size:50px}
-.light.on{background:#facc15;color:black}
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #000;
+  color: white;
+  text-align: center;
+}
+
+.header {
+  padding: 18px;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* RÈM */
+.window {
+  width: 90%;
+  height: 260px;
+  margin: auto;
+  background: linear-gradient(#60a5fa, #e0f2fe);
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.curtain {
+  position: absolute;
+  top: 0;
+  width: 55%;
+  height: 100%;
+  background: repeating-linear-gradient(90deg,#666,#444 14px);
+  transition: 0.3s;
+}
+
+.left { left: 0; }
+.right { right: 0; }
+
+/* 💡 ĐÈN DẠNG THANH NGANG */
+.light-bar {
+  width: 80%;
+  height: 30px;
+  margin: 40px auto;
+  border-radius: 20px;
+  background: #111;
+  transition: 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ánh sáng chạy trong thanh */
+.light-bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg,#fff7cc,#facc15);
+  opacity: 0;
+  transition: 0.3s;
+}
+
+/* khi bật đèn */
+.light-bar.on {
+  box-shadow: 0 0 40px rgba(255,223,0,0.6);
+}
+
+.light-bar.on::before {
+  opacity: 1;
+}
 </style>
 </head>
 
 <body>
 
-<h1>🏠 Smart Home Display</h1>
+<div class="header">🖥️ Smart Home Display</div>
 
+<!-- RÈM -->
 <div class="window">
-<div id="l" class="curtain left"></div>
-<div id="r" class="curtain right"></div>
+  <div id="l" class="curtain left"></div>
+  <div id="r" class="curtain right"></div>
 </div>
 
-<div id="light" class="light">💡</div>
+<!-- 💡 ĐÈN NGANG -->
+<div id="light" class="light-bar"></div>
 
-<script>
+<script type="module">
 
-let lastPos = 0;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* đọc dữ liệu realtime */
-setInterval(()=>{
+const firebaseConfig = {
+  apiKey: "AIzaSyBLclO733ERnBfKLGzQXV6SYS2qohZDNwM",
+  authDomain: "smart-home-9c715.firebaseapp.com",
+  databaseURL: "https://smart-home-9c715-default-rtdb.firebaseio.com",
+  projectId: "smart-home-9c715",
+  storageBucket: "smart-home-9c715.appspot.com",
+  messagingSenderId: "861060916867",
+  appId: "1:861060916867:web:baf38aa90cdf362a4d1db6"
+};
 
-  let pos = +localStorage.getItem("curtain") || 0;
-  let light = localStorage.getItem("light") === "1";
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-  /* rèm */
+/* realtime */
+onValue(ref(db,"home"), (snap)=>{
+  const data = snap.val();
+  if(!data) return;
+
+  let pos = data.curtain || 0;
+  let light = data.light;
+
+  /* RÈM */
   let p = pos/100;
 
-  document.getElementById("l").style.transform=`translateX(-${p*90}%)`;
-  document.getElementById("r").style.transform=`translateX(${p*90}%)`;
+  document.getElementById("l").style.transform =
+    `translateX(-${p*90}%)`;
 
-  /* logic auto light */
-  if(pos <= 10 && !light){
-    document.getElementById("light").classList.add("on");
-  }else if(light){
-    document.getElementById("light").classList.add("on");
-  }else{
-    document.getElementById("light").classList.remove("on");
-  }
+  document.getElementById("r").style.transform =
+    `translateX(${p*90}%)`;
 
-},50);
+  /* 💡 ĐÈN NGANG */
+  document.getElementById("light")
+    .classList.toggle("on", light);
+});
 
 </script>
 
