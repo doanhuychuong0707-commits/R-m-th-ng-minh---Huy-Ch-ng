@@ -181,7 +181,7 @@ function stop(){
   clearInterval(interval);
 }
 
-/* render rèm */
+/* render */
 function render(){
   let p = pos/100;
 
@@ -209,6 +209,15 @@ function sync(){
     light: lightOn
   });
 }
+
+/* =========================
+   🔥 FIX QUAN TRỌNG NHẤT
+   expose function ra window
+========================= */
+window.setCurtain = setCurtain;
+window.move = move;
+window.stop = stop;
+window.setLight = setLight;
 
 </script>
 
