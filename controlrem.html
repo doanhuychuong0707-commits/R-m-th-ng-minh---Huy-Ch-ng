@@ -3,60 +3,162 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Control</title>
+<title>Smart Home Control</title>
+
 <style>
-body{margin:0;font-family:sans-serif;background:#0b1220;color:white}
-.card{background:#111827;margin:15px;padding:18px;border-radius:18px}
-.window{height:140px;background:#60a5fa;border-radius:12px;position:relative;overflow:hidden}
-.curtain{position:absolute;top:0;width:55%;height:100%;background:#444}
-.left{left:0}.right{right:0}
-.controls{display:flex;margin-top:10px}
-.btn{flex:1;margin:5px;padding:14px;border:none;border-radius:12px;color:white}
-.open{background:#22c55e}.close{background:#ef4444}
-.light{height:80px;margin-top:10px;border-radius:12px;background:#020617;display:flex;align-items:center;justify-content:center}
-.light.on{background:#facc15;color:black}
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #0b1220;
+  color: white;
+}
+
+.header {
+  padding: 16px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.card {
+  background: #111827;
+  margin: 12px;
+  padding: 16px;
+  border-radius: 18px;
+}
+
+/* RÈM */
+.window {
+  height: 140px;
+  background: linear-gradient(#60a5fa, #e0f2fe);
+  border-radius: 12px;
+  position: relative;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.curtain {
+  position: absolute;
+  top: 0;
+  width: 55%;
+  height: 100%;
+  background: repeating-linear-gradient(90deg,#666,#444 14px);
+  transition: 0.2s;
+}
+
+.left { left: 0; }
+.right { right: 0; }
+
+/* BUTTON */
+.btn {
+  flex: 1;
+  margin: 4px;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  color: white;
+}
+
+.green { background: #22c55e; }
+.red { background: #ef4444; }
+
+.controls {
+  display: flex;
+  margin-top: 10px;
+}
+
+/* LIGHT */
+.light {
+  height: 80px;
+  margin-top: 10px;
+  border-radius: 12px;
+  background: #020617;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+}
+
+.light.on {
+  background: radial-gradient(circle,#fff7cc,#facc15);
+  box-shadow: 0 0 40px rgba(255,223,0,0.8);
+}
+
+input[type=range] {
+  width: 100%;
+  margin-top: 10px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="card">
-<h3>🪟 Rèm</h3>
-
-<div class="window">
-<div id="l" class="curtain left"></div>
-<div id="r" class="curtain right"></div>
-</div>
-
-<input type="range" min="0" max="100" value="0" oninput="setCurtain(this.value)">
-
-<div class="controls">
-<button class="btn open" onpointerdown="move('open')" onpointerup="stop()">Mở</button>
-<button class="btn close" onpointerdown="move('close')" onpointerup="stop()">Đóng</button>
-</div>
-</div>
+<div class="header">📱 Smart Home Control</div>
 
 <div class="card">
-<h3>💡 Đèn</h3>
-<div id="light" class="light">💡</div>
+  <h3>🪟 Rèm phòng khách</h3>
 
-<div class="controls">
-<button class="btn open" onclick="setLight(true)">Bật</button>
-<button class="btn close" onclick="setLight(false)">Tắt</button>
+  <div class="window">
+    <div id="l" class="curtain left"></div>
+    <div id="r" class="curtain right"></div>
+  </div>
+
+  <input type="range" min="0" max="100" value="0"
+    oninput="setCurtain(this.value)">
+
+  <div class="controls">
+    <button class="btn green"
+      onpointerdown="move('open')"
+      onpointerup="stop()"
+      onpointerleave="stop()">
+      ⬆ Mở
+    </button>
+
+    <button class="btn red"
+      onpointerdown="move('close')"
+      onpointerup="stop()"
+      onpointerleave="stop()">
+      ⬇ Đóng
+    </button>
+  </div>
 </div>
+
+<div class="card">
+  <h3>💡 Đèn phòng</h3>
+
+  <div id="light" class="light">💡</div>
+
+  <div class="controls">
+    <button class="btn green" onclick="setLight(true)">Bật</button>
+    <button class="btn red" onclick="setLight(false)">Tắt</button>
+  </div>
 </div>
 
-<script>
+<!-- FIREBASE -->
+<script type="module">
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBLclO733ERnBfKLGzQXV6SYS2qohZDNwM",
+  authDomain: "smart-home-9c715.firebaseapp.com",
+  databaseURL: "https://smart-home-9c715-default-rtdb.firebaseio.com",
+  projectId: "smart-home-9c715",
+  storageBucket: "smart-home-9c715.appspot.com",
+  messagingSenderId: "861060916867",
+  appId: "1:861060916867:web:baf38aa90cdf362a4d1db6"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* STATE */
 let pos = 0;
+let lightOn = false;
 let interval = null;
 
-/* ghi dữ liệu */
-function sync(){
-  localStorage.setItem("curtain", pos);
-}
-
-/* RÈM */
+/* ===== RÈM ===== */
 function setCurtain(v){
   pos = +v;
   render();
@@ -65,9 +167,11 @@ function setCurtain(v){
 
 function move(dir){
   clearInterval(interval);
+
   interval = setInterval(()=>{
     if(dir==="open" && pos<100) pos+=1;
     if(dir==="close" && pos>0) pos-=1;
+
     render();
     sync();
   },20);
@@ -77,23 +181,34 @@ function stop(){
   clearInterval(interval);
 }
 
+/* render rèm */
 function render(){
   let p = pos/100;
-  document.getElementById("l").style.transform=`translateX(-${p*90}%)`;
-  document.getElementById("r").style.transform=`translateX(${p*90}%)`;
+
+  document.getElementById("l").style.transform =
+    `translateX(-${p*90}%)`;
+
+  document.getElementById("r").style.transform =
+    `translateX(${p*90}%)`;
+
+  document.getElementById("light")
+    .classList.toggle("on", lightOn);
 }
 
-/* ĐÈN */
+/* ===== ĐÈN ===== */
 function setLight(state){
-  localStorage.setItem("light", state?"1":"0");
+  lightOn = state;
+  sync();
+  render();
 }
 
-/* auto sync light theo rèm (logic ở display cũng có) */
-
-setInterval(()=>{
-  // giữ sync liên tục
-  sync();
-},100);
+/* ===== FIREBASE SYNC ===== */
+function sync(){
+  set(ref(db,"home"),{
+    curtain: pos,
+    light: lightOn
+  });
+}
 
 </script>
 
